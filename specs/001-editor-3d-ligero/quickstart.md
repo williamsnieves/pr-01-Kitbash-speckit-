@@ -1,3 +1,20 @@
 # Quickstart — Editor 3D Ligero
 
-TBD after stack selection.
+## Prerequisites
+- Node.js 18+ (LTS recommended)
+- pnpm
+
+## Install
+```bash
+pnpm install
+```
+
+## Run Dev Server
+```bash
+pnpm dev
+```
+
+## Tests
+```bash
+pnpm test
+```
