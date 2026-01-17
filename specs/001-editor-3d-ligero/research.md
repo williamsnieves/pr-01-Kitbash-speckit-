@@ -1,9 +1,11 @@
 # Research — Editor 3D Ligero
 
 ## Stack Versions
-- Next.js: latest stable (confirm in implementation).
-- Three.js: latest stable (confirm in implementation).
-- TypeScript: latest stable (confirm in implementation).
+- Next.js: 16.1.3
+- React: 19.2.3
+- Three.js: 0.182.0
+- TypeScript: 5.9.3
+- Three-stdlib: 2.36.1
 
 ## Export Formats (Target)
 - Use Three.js exporters.
