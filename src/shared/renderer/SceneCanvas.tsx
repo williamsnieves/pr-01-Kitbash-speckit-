@@ -3,19 +3,49 @@
 import { useEffect, useRef } from "react";
 import {
   AmbientLight,
+  Clock,
   Color,
   DirectionalLight,
   GridHelper,
   PerspectiveCamera,
+  Raycaster,
   Scene,
+  Vector2,
   WebGLRenderer,
 } from "three";
+import { OrbitControls } from "three-stdlib";
 
+import type { SceneObject } from "../domain/types";
 import { useEditorStore } from "../state/editorStore";
+import { findSceneObjectId } from "../utils/sceneObject";
 
 export function SceneCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { setThreeState } = useEditorStore();
+  const {
+    setThreeState,
+    objects,
+    selectObject,
+    selectedId,
+    autoRotateEnabled,
+  } = useEditorStore();
+
+  const objectsRef = useRef<Object3D[]>([]);
+  const sceneObjectsRef = useRef<SceneObject[]>([]);
+  const selectionRef = useRef(selectedId);
+  const autoRotateRef = useRef(autoRotateEnabled);
+
+  useEffect(() => {
+    sceneObjectsRef.current = objects;
+    objectsRef.current = objects.map((item) => item.object);
+  }, [objects]);
+
+  useEffect(() => {
+    selectionRef.current = selectedId;
+  }, [selectedId]);
+
+  useEffect(() => {
+    autoRotateRef.current = autoRotateEnabled;
+  }, [autoRotateEnabled]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -49,8 +79,51 @@ export function SceneCanvas() {
     directional.userData.exportable = false;
     scene.add(directional);
 
+    const orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.08;
+    orbitControls.target.set(0, 0, 0);
+    orbitControls.update();
+
+    const raycaster = new Raycaster();
+    const pointer = new Vector2();
+    const clock = new Clock();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      if (orbitControls && !orbitControls.enabled) {
+        return;
+      }
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(objectsRef.current, true);
+      if (intersects.length === 0) {
+        selectObject(null);
+        return;
+      }
+
+      const id = findSceneObjectId(intersects[0].object);
+      selectObject(id);
+    };
+
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+
     let frameId = 0;
     const render = () => {
+      const delta = clock.getDelta();
+      orbitControls.update();
+
+      if (autoRotateRef.current && selectionRef.current) {
+        const selected = sceneObjectsRef.current.find(
+          (item) => item.id === selectionRef.current
+        );
+        if (selected) {
+          selected.object.rotation.y += delta * 0.6;
+        }
+      }
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(render);
     };
@@ -64,15 +137,17 @@ export function SceneCanvas() {
     });
     resizeObserver.observe(container);
 
-    setThreeState({ scene, camera, renderer });
+    setThreeState({ scene, camera, renderer, orbitControls });
 
     return () => {
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+      orbitControls.dispose();
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
-  }, [setThreeState]);
+  }, [setThreeState, selectObject]);
 
   return <div ref={containerRef} className="scene-canvas" />;
 }

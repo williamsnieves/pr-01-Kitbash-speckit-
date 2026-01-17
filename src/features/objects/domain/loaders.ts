@@ -1,6 +1,8 @@
 import type { Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { normalizeObject } from "../../../shared/utils/sceneObject";
+
 export async function loadGltfAsset(file: File): Promise<Object3D> {
   const loader = new GLTFLoader();
   const url = URL.createObjectURL(file);
@@ -14,6 +16,7 @@ export async function loadGltfAsset(file: File): Promise<Object3D> {
         (error) => reject(error)
       );
     });
+    normalizeObject(gltf.scene, 2);
     return gltf.scene;
   } finally {
     URL.revokeObjectURL(url);
