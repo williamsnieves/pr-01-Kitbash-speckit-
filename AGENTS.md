@@ -25,6 +25,7 @@ This repo follows Spec-Driven Development (Spec Kit). PRD → spec → plan → 
 
 ## Git workflow
 - Branch naming: `spec/001-*`, `plan/001-*`, `tasks/001-*`, `impl/001-*`, `fix/*`.
+- Before any implementation work, create and switch to the spec-specific branch.
 - Keep commits focused and small.
 - Use Conventional Commits for messages.
 - PR titles follow Conventional Commits format.

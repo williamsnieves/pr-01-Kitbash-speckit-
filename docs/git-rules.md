@@ -6,6 +6,7 @@
 - `tasks/001-*` for task breakdown updates.
 - `impl/001-*` for implementation phases.
 - `fix/*` for corrections.
+- Always create/switch to the spec branch before implementation work.
 
 ## Commits
 - Follow Conventional Commits.

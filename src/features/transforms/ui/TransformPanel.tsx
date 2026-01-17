@@ -6,7 +6,15 @@ import type { Transform } from "../../../shared/domain/types";
 type Axis = "x" | "y" | "z";
 
 export function TransformPanel() {
-  const { selectedId, getSelectedObject, updateSelectedTransform } = useEditorStore();
+  const {
+    selectedId,
+    getSelectedObject,
+    updateSelectedTransform,
+    autoRotateEnabled,
+    setAutoRotateEnabled,
+    transformMode,
+    setTransformMode,
+  } = useEditorStore();
   const selected = getSelectedObject();
 
   if (!selected || !selectedId) {
@@ -36,6 +44,27 @@ export function TransformPanel() {
   return (
     <section className="panel">
       <h2>Transform</h2>
+      <div className="panel-row">
+        {(["translate", "rotate", "scale"] as const).map((mode) => (
+          <button
+            key={mode}
+            className={`btn ${transformMode === mode ? "primary" : ""}`}
+            onClick={() => setTransformMode(mode)}
+            type="button"
+          >
+            {mode}
+          </button>
+        ))}
+      </div>
+      <label className="panel-row">
+        <span>Auto-rotate</span>
+        <input
+          type="checkbox"
+          checked={autoRotateEnabled}
+          onChange={(event) => setAutoRotateEnabled(event.target.checked)}
+          disabled={!selectedId}
+        />
+      </label>
       <div className="panel-grid">
         {(["position", "rotation", "scale"] as const).map((group) => (
           <div key={group} className="panel-group">

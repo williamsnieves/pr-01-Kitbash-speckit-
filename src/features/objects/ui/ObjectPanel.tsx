@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { createPrimitiveMesh } from "../domain/primitives";
 import { loadGltfAsset } from "../domain/loaders";
 import { buildDefaultMaterial, buildTransformFromObject, useEditorStore } from "../../../shared/state/editorStore";
+import { tagObjectForSelection } from "../../../shared/utils/sceneObject";
 
 import type { PrimitiveType, SceneObject } from "../../../shared/domain/types";
 
@@ -38,6 +39,7 @@ export function ObjectPanel() {
       transform: buildTransformFromObject(mesh),
       material: buildDefaultMaterial(),
     };
+    tagObjectForSelection(sceneObject.object, sceneObject.id);
     addObject(sceneObject);
   };
 
@@ -58,6 +60,7 @@ export function ObjectPanel() {
         transform: buildTransformFromObject(object),
         material: buildDefaultMaterial(),
       };
+      tagObjectForSelection(sceneObject.object, sceneObject.id);
       addObject(sceneObject);
     } finally {
       setIsLoadingAsset(false);

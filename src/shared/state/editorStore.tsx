@@ -9,20 +9,25 @@ import {
   useState,
 } from "react";
 import type { Object3D, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import type { OrbitControls } from "three-stdlib";
 import { Color } from "three";
 
 import type { MaterialModel, SceneObject, Transform } from "../domain/types";
+import { tagObjectForSelection } from "../utils/sceneObject";
 
 type ThreeState = {
   scene: Scene | null;
   camera: PerspectiveCamera | null;
   renderer: WebGLRenderer | null;
+  orbitControls?: OrbitControls | null;
 };
 
 type EditorState = {
   three: ThreeState;
   objects: SceneObject[];
   selectedId: string | null;
+  autoRotateEnabled: boolean;
+  transformMode: "translate" | "rotate" | "scale";
 };
 
 type EditorContextValue = EditorState & {
@@ -32,6 +37,8 @@ type EditorContextValue = EditorState & {
   removeSelected: () => void;
   updateSelectedTransform: (transform: Transform) => void;
   updateSelectedMaterial: (material: MaterialModel) => void;
+  setAutoRotateEnabled: (enabled: boolean) => void;
+  setTransformMode: (mode: "translate" | "rotate" | "scale") => void;
   getSelectedObject: () => SceneObject | null;
 };
 
@@ -54,6 +61,8 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     three: { scene: null, camera: null, renderer: null },
     objects: [],
     selectedId: null,
+    autoRotateEnabled: false,
+    transformMode: "translate",
   });
 
   const setThreeState = useCallback((next: ThreeState) => {
@@ -64,10 +73,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     if (!object.object) {
       return;
     }
-    if (!object.object.userData) {
-      object.object.userData = {};
-    }
-    object.object.userData.exportable = true;
+    tagObjectForSelection(object.object, object.id);
     setState((prev) => ({
       ...prev,
       objects: [...prev.objects, object],
@@ -76,7 +82,11 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const selectObject = useCallback((id: string | null) => {
-    setState((prev) => ({ ...prev, selectedId: id }));
+    setState((prev) => ({
+      ...prev,
+      selectedId: id,
+      autoRotateEnabled: id ? prev.autoRotateEnabled : false,
+    }));
   }, []);
 
   const removeSelected = useCallback(() => {
@@ -89,7 +99,12 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
       const nextObjects = prev.objects.filter(
         (item) => item.id !== prev.selectedId
       );
-      return { ...prev, objects: nextObjects, selectedId: null };
+      return {
+        ...prev,
+        objects: nextObjects,
+        selectedId: null,
+        autoRotateEnabled: false,
+      };
     });
   }, []);
 
@@ -113,6 +128,17 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setAutoRotateEnabled = useCallback((enabled: boolean) => {
+    setState((prev) => ({ ...prev, autoRotateEnabled: enabled }));
+  }, []);
+
+  const setTransformMode = useCallback(
+    (mode: "translate" | "rotate" | "scale") => {
+      setState((prev) => ({ ...prev, transformMode: mode }));
+    },
+    []
+  );
+
   const getSelectedObject = useCallback(() => {
     return state.objects.find((item) => item.id === state.selectedId) ?? null;
   }, [state.objects, state.selectedId]);
@@ -126,6 +152,8 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
       removeSelected,
       updateSelectedTransform,
       updateSelectedMaterial,
+      setAutoRotateEnabled,
+      setTransformMode,
       getSelectedObject,
     }),
     [
@@ -136,6 +164,8 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
       removeSelected,
       updateSelectedTransform,
       updateSelectedMaterial,
+      setAutoRotateEnabled,
+      setTransformMode,
       getSelectedObject,
     ]
   );
